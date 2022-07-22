@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Document</title>
+    <!-- 引入样式 -->
+    <link href="../../plugins/element-ui/index.css" rel="stylesheet"/>
+    <link href="../../styles/common.css" rel="stylesheet"/>
+    <link href="../../styles/page.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="dashboard-container" id="category-app">
+    <div class="container">
+        <div
+                class="tableBar"
+                style="display: inline-block"
+        >
+            <!--1、 点击事件，addClass('class')弹出新增菜品分类对话框 -->
+            <el-button
+                    @click="addClass('class')"
+                    class="continue"
+                    type="primary"
+            >
+                + 新增菜品分类
+            </el-button>
+
+            <!-- 点击事件，addClass('meal')弹出新增套餐分类对话框 -->
+            <el-button
+                    @click="addClass('meal')"
+                    type="primary"
+            >
+                + 新增套餐分类
+            </el-button>
+        </div>
+        <el-table
+                :data="tableData"
+                class="tableBox"
+                stripe
+        >
+            <el-table-column
+                    label="分类名称"
+                    prop="name"
+            />
+            </el-table-column>
+            <el-table-column
+                    label="分类类型"
+                    prop="type"
+            >
+                <template slot-scope="scope">
+                    <span>{{ scope.row.type == '1' ? '菜品分类': '套餐分类' }}</span>
+                </template>
+            </el-table-column>
+            <el-table-column
+                    label="操作时间"
+                    prop="updateTime"
+            >
+                <template slot-scope="scope">
+                    {{scope.row.updateTime}}
+                </template>
+            </el-table-column>
+            <el-table-column
+                    label="排序"
+                    prop="sort"
+            />
+            </el-table-column>
+            <el-table-column
+                    align="center"
+                    label="操作"
+                    width="160"
+            >
+                <template slot-scope="scope">
+                    <el-button
+                            @click="editHandle(scope.row)"
+                            class="blueBug"
+                            size="small"
+                            type="text"
+                    >
+                        修改
+                    </el-button>
+                    <el-button
+                            @click="deleteHandle(scope.row.id)"
+                            class="delBut non"
+                            size="small"
+                            type="text"
+                    >
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination
+                :page-size="pageSize"
+                :page-sizes="[10, 20, 30, 40]"
+                :total="counts"
+                @current-change="handleCurrentChange"
+                @size-change="handleSizeChange"
+                class="pageList"
+                layout="total, sizes, prev, pager, next, jumper"
+        ></el-pagination>
+    </div>
+
+    <!-- 弹出对话框，添加菜品分类|套餐分类
+        :visible.sync  :设置对话框可见|不可见，通过classData.dialogVisible来设置
+        :title :设置对话框的标题，根据classData.title来设置
+    -->
+    <el-dialog
+            :before-close="handleClose"
+            :title="classData.title"
+            :visible.sync="classData.dialogVisible"
+            width="30%"
+    >
+        <el-form
+                class="demo-form-inline"
+                label-width="100px"
+        >
+            <el-form-item label="分类名称：">
+                <el-input
+                        maxlength="14"
+                        placeholder="请输入分类名称"
+                        v-model="classData.name"
+                />
+            </el-form-item>
+            <el-form-item label="排序：">
+                <el-input placeholder="请输入排序" type="number" v-model="classData.sort"/>
+            </el-form-item>
+        </el-form>
+        <span
+                class="dialog-footer"
+                slot="footer"
+        >
+        <el-button
+                @click="classData.dialogVisible = false"
+                size="medium"
+        >取 消</el-button>
+
+            <!-- 3、点击事件，发起请求 -->
+        <el-button
+                @click="submitForm()"
+                size="medium"
+                type="primary"
+        >确 定</el-button>
+        <el-button
+                @click="submitForm('go')"
+                class="continue"
+                size="medium"
+                type="primary"
+                v-if="action != 'edit'"
+        > 保存并继续添加 </el-button>
+      </span>
+    </el-dialog>
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../../plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../../plugins/element-ui/index.js"></script>
+<!-- 引入axios -->
+<script src="../../plugins/axios/axios.min.js"></script>
+<script src="../../js/request.js"></script>
+<script src="../../api/category.js"></script>
+<script>
+    new Vue({
+        el: '#category-app',
+        data() {
+            return {
+                action: '',
+                counts: 0,
+                page: 1,
+                pageSize: 10,
+                tableData: [],
+                type: '',
+                classData: {
+                    'title': '添加菜品分类',
+                    'dialogVisible': false,   //对话框默认不弹出
+                    'categoryId': '',
+                    'name': '',
+                    sort: ''
+                }
+            }
+        },
+        computed: {},
+        created() {
+            this.init()
+        },
+        mounted() {
+        },
+        methods: {
+            async init() {
+                await getCategoryPage({'page': this.page, 'pageSize': this.pageSize}).then(res => {
+                    if (String(res.code) === '1') {
+                        this.tableData = res.data.records
+                        this.counts = Number(res.data.total)
+                    } else {
+                        this.$message.error(res.msg || '操作失败')
+                    }
+                }).catch(err => {
+                    this.$message.error('请求出错了：' + err)
+                })
+            },
+            handleQuery() {
+                this.page = 1;
+                this.init();   //利用vue的初始化（created）发起分类信息查询请求
+            },
+            // 2、新增分类对话框的设置
+            addClass(st) {
+                //根据st的值选择弹出 新增菜品分类对话框|新增套餐分类对话框
+                if (st == 'class') {
+                    this.classData.title = '新增菜品分类'   //设置对话框标题
+                    this.type = '1'                       //菜品分类type=1
+                } else {
+                    this.classData.title = '新增套餐分类'   //设置对话框标题
+                    this.type = '2'                       //菜品分类type=2
+                }
+                this.action = 'add'                    //action用来表示新增（add）或修改（update）
+                this.classData.name = ''
+                this.classData.sort = ''
+                this.classData.dialogVisible = true   //设置对话框可见
+            },
+            editHandle(dat) {
+                this.classData.title = '修改分类'
+                this.action = 'edit'
+                this.classData.name = dat.name     //回显数据
+                this.classData.sort = dat.sort     //回显数据
+                this.classData.id = dat.id
+                this.classData.dialogVisible = true
+            },
+            // 关闭弹窗
+            handleClose(st) {
+                this.classData.dialogVisible = false
+            },
+            //删除
+            deleteHandle(id) {
+                this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+                    'confirmButtonText': '确定',
+                    'cancelButtonText': '取消',
+                    'type': 'warning'
+                }).then(() => {
+                    deleCategory(id).then(res => {
+                        if (res.code === 1) {
+                            this.$message.success('删除成功！')
+                            this.handleQuery()
+                        } else {
+                            this.$message.error(res.msg || '操作失败')
+                        }
+                    }).catch(err => {
+                        this.$message.error('请求出错了：' + err)
+                    })
+                })
+            },
+            //3、发起请求，数据提交
+            submitForm(st) {
+                const classData = this.classData
+                const valid = (classData.name === 0 || classData.name) && (classData.sort === 0 || classData.sort)
+                if (this.action === 'add') {
+                    if (valid) {
+                        const reg = /^\d+$/
+                        if (reg.test(classData.sort)) {
+                            //4、addCategory，携带参数发起请求，返回结果res
+                            addCategory({'name': classData.name, 'type': this.type, sort: classData.sort}).then(res => {
+                                console.log(res)
+                                if (res.code === 1) {
+                                    this.$message.success('分类添加成功！')
+                                    if (!st) {
+                                        //5、关闭对话框
+                                        this.classData.dialogVisible = false
+                                    } else {
+                                        this.classData.name = ''
+                                        this.classData.sort = ''
+                                    }
+                                    this.handleQuery()  //6、发起请求，更新列表页面
+                                } else {
+                                    this.$message.error(res.msg || '操作失败')
+                                }
+                            }).catch(err => {
+                                this.$message.error('请求出错了：' + err)
+                            })
+                        } else {
+                            this.$message.error('排序只能输入数字类型')
+                        }
+
+                    } else {
+                        this.$message.error('请输入分类名称或排序')
+                    }
+                } else if (valid) {
+                    const reg = /^\d+$/
+                    if (reg.test(this.classData.sort)) {
+                        editCategory({
+                            'id': this.classData.id,
+                            'name': this.classData.name,
+                            sort: this.classData.sort
+                        }).then(res => {
+                            if (res.code === 1) {
+                                this.$message.success('分类修改成功！')
+                                this.classData.dialogVisible = false
+                                this.handleQuery()
+                            } else {
+                                this.$message.error(res.msg || '操作失败')
+                            }
+                        }).catch(err => {
+                            this.$message.error('请求出错了：' + err)
+                        })
+                    } else {
+                        this.$message.error('排序只能输入数字类型')
+                    }
+                } else {
+                    this.$message.error('请输入分类名称或排序')
+                }
+            },
+            handleSizeChange(val) {
+                this.pageSize = val
+                this.init()
+            },
+            handleCurrentChange(val) {
+                this.page = val
+                this.init()
+            }
+        }
+    })
+</script>
+</body>
+</html>

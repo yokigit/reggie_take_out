@@ -1,0 +1,40 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: reggie_take_out
+  datasource:
+    druid:
+      url: jdbc:mysql://localhost:3306/reggie?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false
+      username: root
+      password: y-CHess02
+  servlet:
+    multipart:
+      #设置单个文件最大为10MB
+      max-file-size: 10MB
+      #设置单次请求中文件总大小最大为100MB
+      max-request-size: 100MB
+  mail:
+    #发送邮件的服务器地址
+    host: smtp.qq.com
+    #开启 IMAP/SMTP服务 的qq邮箱的账号 ()
+    username: 2654149470@qq.com
+    #授权码( POP3/SMTP服务:fqguzrnsjndkeaid, IMAP/SMTP服务: wdrhevljsaqiebbg)
+    password: fqguzrnsjndkeaid
+    default-encoding: UTF-8
+    test-connection: true
+
+
+mybatis-plus:
+  configuration:
+    #下划线转驼峰
+    map-underscore-to-camel-case: true
+    #sql日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      #雪花算法
+      id-type: assign_id
+
+reggie:
+  basePath: D:\maven_work\maven_projects\src\main\resources\backend\images\dish\

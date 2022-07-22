@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no,minimal-ui"
+          name="viewport">
+    <title>菩提阁</title>
+    <link href="images/favico.ico" rel="icon">
+    <!--不同屏幕尺寸根字体设置-->
+    <script src="js/base.js"></script>
+    <!--element-ui的样式-->
+    <link href="../backend/plugins/element-ui/index.css" rel="stylesheet"/>
+    <!--引入vant样式-->
+    <link href="styles/vant.min.css" rel="stylesheet"/>
+    <!-- 引入样式  -->
+    <link href="styles/index.css" rel="stylesheet"/>
+    <!--本页面内容的样式-->
+    <link href="styles/main.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app" id="main">
+    <!--  个人中心页面  -->
+    <div class="divHead">
+        <img @click="toUserPage" src="images/user.png"/>
+    </div>
+    <div class="divTitle">
+        <div class="divStatic">
+            <img class="logo" src="images/logo.png"/>
+            <div class="divDesc">
+                <div class="divName">菩提阁餐厅</div>
+                <div class="divSend">
+                    <span><img src="images/time.png"/> 距离1.5km</span>
+                    <span><img src="images/money.png"/> 配送费6元</span>
+                    <span><img src="images/location.png"/> 预计时长12min</span>
+                </div>
+            </div>
+        </div>
+        <div class="divDesc">
+            简介: 菩提阁中餐厅是菩提阁点餐的独立的品牌，定位“大众 化的美食外送餐饮”，旨为顾客打造专业美食。
+        </div>
+    </div>
+
+    <div class="divBody">
+        <!--    展示菜品分类和套餐分类    -->
+        <div class="divType">
+            <ul>
+                <!--  点击事件：获取当前分类的所有菜品或套餐的数据  -->
+                <li :class="{active:activeType === index}" :key="index" @click="categoryClick(index,item.id,item.type)"
+                    v-for="(item,index) in categoryList">{{item.name}}
+                </li>
+            </ul>
+        </div>
+
+        <!--    展示当前分类的菜品或套餐    -->
+        <div class="divMenu">
+            <div>
+                <!-- 点击事件：展示当前菜品或套餐的详情  -->
+                <div :key="index" @click="dishDetails(item)" class="divItem" v-for="(item,index) in dishList">
+                    <!-- 显示当前菜品或套餐的图片，:src->发起请求下载图片 -->
+                    <el-image :src="imgPathConvert(item.image)">
+                        <div class="image-slot" slot="error">
+                            <img src="images/noImg.png"/>
+                        </div>
+                    </el-image>
+
+                    <div>
+                        <!-- 显示名字，描述，月销，价格 -->
+                        <div class="divName">{{item.name}}</div>
+                        <div class="divDesc">{{item.description}}</div>
+                        <div class="divDesc">{{'月销' + (item.saleNum ? item.saleNum : 0) }}</div>
+                        <div class="divBottom"><span>￥</span><span>{{item.price/100}}</span></div>
+
+                        <div class="divNum">
+                            <!-- if当前菜品或套餐在购物车中的数量大于0，-->
+                            <div class="divSubtract" v-if="item.number > 0">
+                                <!-- 都会显示【-】 -->
+                                <!-- 点击事件：当前菜品或套餐在购物车中的数量-1 -->
+                                <img @click.prevent.stop="subtractCart(item)" src="images/subtract.png"/>
+                            </div>
+
+                            <!-- 显示当前菜品在购物车中的数量 -->
+                            <div class="divDishNum">{{item.number}}</div>
+
+                            <!-- if当前菜品或套餐的flavors不为空,说明只能是菜品。并且当前菜品的flavors大于0,并且当前菜品在购物车中的数量等于0, -->
+                            <div @click.prevent.stop="chooseFlavorClick(item)" class="divTypes"
+                                 v-if="item.flavors && item.flavors.length > 0 && !item.number ">
+                                <!-- 则显示【选择规格】 -->
+                                <!-- 点击事件：弹出选择规则窗口，展示当前菜品的口味数据 -->
+                                选择规格
+                            </div>
+                            <!-- else当前是套餐 或者 当前是菜品，其在购物车中的数量大于0 -->
+                            <div class="divAdd" v-else>
+                                <!-- 显示【+】 -->
+                                <!-- 点击事件：当前菜品或套餐在购物车中的数量+1 -->
+                                <img @click.prevent.stop="addCart(item)" src="images/add.png"/>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="divLayer">
+        <div class="divLayerLeft"></div>
+        <div class="divLayerRight"></div>
+    </div>
+
+    <!-- 购物车的汇总窗口 -->
+    <div class="divCart" v-if="categoryList.length > 0">
+        <!-- 点击事件：打开购物车窗口 -->
+        <div :class="{imgCartActive: cartData && cartData.length > 0, imgCart:!cartData || cartData.length<1}"
+             @click="openCart"></div>
+
+        <!-- if购物车数据不为空并且商品数量大于0，则显示商品数量 -->
+        <div :class="{divGoodsNum:1===1, moreGoods:cartData && cartData.length > 99}"
+             v-if="cartData && cartData.length > 0">{{ goodsNum }}
+        </div>
+
+        <!-- 显示结算总额 -->
+        <div class="divNum">
+            <span>￥</span>
+            <span>{{goodsPrice}}</span>
+        </div>
+
+        <div class="divPrice"></div>
+
+        <!-- 显示【去结算】 -->
+        <!--  点击事件：跳转到结算界面  -->
+        <div :class="{btnSubmitActive: cartData && cartData.length > 0, btnSubmit:!cartData || cartData.length<1}"
+             @click="toAddOrderPage">去结算
+        </div>
+    </div>
+
+    <!--  选择规格窗口  -->
+    <van-dialog :show-confirm-button="false" class="dialogFlavor" ref="flavorDialog" v-model="dialogFlavor.show">
+        <div class="dialogTitle">{{dialogFlavor.name}}</div>
+
+        <!-- 展示每个口味 -->
+        <div class="divContent">
+            <div :key="flavor.id" v-for="flavor in dialogFlavor.flavors">
+                <div class="divFlavorTitle">{{flavor.name}}</div>
+                <!-- 展示每个口味的每个规格 -->
+                <span :class="{spanActive:flavor.dishFlavor === item}"
+                      :key="item"
+                      @click="flavorClick(flavor,item)"
+                      v-for="item in JSON.parse(flavor.value)"
+                >{{item}}</span>
+            </div>
+        </div>
+
+        <div class="divBottom">
+            <div><span class="spanMoney">￥</span>{{dialogFlavor.price/100}}</div>
+            <!-- 菜品添加到购物车 1 -->
+            <!-- 点击事件：选择完规格后，加入购物车 -->
+            <div @click="dialogFlavorAddCart">加入购物车</div>
+        </div>
+
+        <div @click="dialogFlavor.show = false" class="divFlavorClose">
+            <img src="images/close.png"/>
+        </div>
+    </van-dialog>
+
+    <!-- 购物车窗口 -->
+    <van-popup :style="{ height: '50%' }" class="dialogCart" position="bottom" v-model="cartDialogShow">
+        <div class="divCartTitle">
+            <div class="title">购物车</div>
+            <div @click="clearCart" class="clear">
+                <i class="el-icon-delete"></i> 清空
+            </div>
+        </div>
+        <div class="divCartContent">
+            <div :key="item.id" class="divCartItem" v-for="item in cartData">
+                <el-image :src="imgPathConvert(item.image)">
+                    <div class="image-slot" slot="error">
+                        <img src="images/noImg.png"/>
+                    </div>
+                </el-image>
+                <div class="divDesc">
+                    <div class="name">{{item.name}}</div>
+                    <div class="price">
+                        <span class="spanMoney">￥</span>{{item.amount}}
+                    </div>
+                </div>
+                <div class="divNum">
+                    <div class="divSubtract">
+                        <img @click="cartNumberSubtract(item)" src="images/subtract.png"/>
+                    </div>
+                    <div class="divDishNum">{{item.number}}</div>
+                    <div class="divAdd">
+                        <img @click="cartNumAdd(item)" src="images/add.png"/>
+                    </div>
+                </div>
+                <div class="divSplit"></div>
+            </div>
+        </div>
+    </van-popup>
+
+    <!-- 菜品详情窗口 -->
+    <van-dialog :show-confirm-button="false"
+                class="detailsDialog"
+                ref="detailsDialog"
+                v-if="detailsDialog.show"
+                v-model="detailsDialog.show"
+    >
+        <div class="divContainer">
+            <el-image :src="imgPathConvert(detailsDialog.item.image)">
+                <div class="image-slot" slot="error">
+                    <img src="images/noImg.png"/>
+                </div>
+            </el-image>
+            <div class="title">{{detailsDialog.item.name}}</div>
+            <div class="content">{{detailsDialog.item.description}}</div>
+        </div>
+        <div class="divNum">
+            <div class="left">
+                <span>￥</span><span>{{detailsDialog.item.price/100}}</span>
+            </div>
+            <div class="right">
+                <div class="divSubtract" v-if="detailsDialog.item.number > 0">
+                    <img @click="subtractCart(detailsDialog.item)" src="images/subtract.png"/>
+                </div>
+                <div class="divDishNum">{{detailsDialog.item.number}}</div>
+                <div @click="chooseFlavorClick(detailsDialog.item)"
+                     class="divTypes"
+                     v-if="detailsDialog.item.flavors && detailsDialog.item.flavors.length > 0 && !detailsDialog.item.number ">
+                    选择规格
+                </div>
+                <div class="divAdd" v-else>
+                    <img @click="addCart(detailsDialog.item)" src="images/add.png"/>
+                </div>
+            </div>
+        </div>
+        <div @click="detailsDialog.show = false" class="detailsDialogClose">
+            <img src="images/close.png"/>
+        </div>
+    </van-dialog>
+
+    <!-- 套餐详情窗口 -->
+    <van-dialog :show-confirm-button="false"
+                class="setMealDetailsDialog"
+                ref="setMealDetailsDialogd"
+                v-if="setMealDialog.show"
+                v-model="setMealDialog.show"
+    >
+        <div class="divContainer">
+            <div class="title">{{setMealDialog.item.name}}</div>
+
+            <!-- 遍历套餐中的菜品 -->
+            <div :key="index" class="item" v-for="(item,index) in setMealDialog.item.list">
+                <el-image :src="imgPathConvert(item.image)">
+                    <div class="image-slot" slot="error">
+                        <img src="images/noImg.png"/>
+                    </div>
+                </el-image>
+                <div class="divSubTitle">{{item.name + '(' + item.copies + '份)' }}
+                    <div class="divPrice">
+                        <span>￥</span><span>{{item.price/100}}</span>
+                    </div>
+                </div>
+                <div class="content">{{item.description}}</div>
+            </div>
+
+        </div>
+        <div class="divNum">
+            <div class="left">
+                <span>￥</span><span>{{setMealDialog.item.price/100}}</span>
+            </div>
+            <div class="right">
+                <div class="divSubtract" v-if="setMealDialog.item.number > 0">
+                    <img @click="subtractCart(setMealDialog.item)" src="images/subtract.png"/>
+                </div>
+                <div class="divDishNum">{{setMealDialog.item.number}}</div>
+                <div class="divAdd" v-if="setMealDialog.item.number">
+                    <img @click="addCart(setMealDialog.item)" src="images/add.png"/>
+                </div>
+                <div @click="addCart(setMealDialog.item)" class="addCart" v-if="!setMealDialog.item.number">加入购物车</div>
+            </div>
+        </div>
+        <div @click="setMealDialog.show = false" class="detailsDialogClose">
+            <img src="images/close.png"/>
+        </div>
+    </van-dialog>
+
+</div>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="../backend/plugins/vue/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="../backend/plugins/element-ui/index.js"></script>
+<!-- 引入vant样式 -->
+<script src="js/vant.min.js"></script>
+<!-- 引入axios -->
+<script src="../backend/plugins/axios/axios.min.js"></script>
+<script src="js/request.js"></script>
+<script src="js/common.js"></script>
+<script src="api/main.js"></script>
+</body>
+<script>
+    new Vue({
+        el: '#main',
+        data() {
+            return {
+                //目前展示的分类，左边菜品类别index
+                activeType: 0,
+                //分类列表
+                categoryList: [],
+                //分类id
+                categoryId: undefined,
+                //菜品和套餐的列表
+                dishList: [],
+                //购物车数据
+                cartData: [],
+                //选择规格 窗口
+                dialogFlavor: {
+                    name: '',
+                    flavors: [],
+                    dishId: undefined,
+                    price: undefined,
+                    show: false,
+                    image: ''
+                },
+                //是否展示购物车
+                cartDialogShow: false,
+                //菜品详细 窗口
+                detailsDialog: {
+                    show: false,
+                    item: {image: ''}
+                },
+                //套餐详细 窗口
+                setMealDialog: {
+                    show: false,
+                    item: {}
+                },
+            }
+        },
+        computed: {
+            goodsNum() {
+                let num = 0
+                this.cartData.forEach(item => {
+                    num += item.number
+                })
+                if (num < 99) {
+                    return num
+                } else {
+                    return '99+'
+                }
+            },
+            goodsPrice() {
+                let price = 0
+                this.cartData.forEach(item => {
+                    price += (item.number * item.amount)
+                })
+                return price
+            }
+        },
+        created() {
+        },
+        watch: {
+            'dialogFlavor.show'(flag) {
+                if (flag) {
+                    document.querySelector('.divCart').style.zIndex = 1
+                } else {
+                    document.querySelector('.divCart').style.zIndex = 3000
+                }
+            },
+        },
+        mounted() {
+            this.initData()
+        },
+        methods: {
+            //初始化数据
+            initData() {
+                Promise.all([categoryListApi(), cartListApi({})]).then(res => {
+                    //获取分类数据
+                    if (res[0].code === 1) {
+                        this.categoryList = res[0].data
+                        if (Array.isArray(res[0].data) && res[0].data.length > 0) {
+                            this.categoryId = res[0].data[0].id
+                            if (res[0].data[0].type === 1) { //type=1，说明该分类是菜品分类
+                                this.getDishList()     //
+                            } else {
+                                this.getSetmealData()
+                            }
+                        }
+                    } else {
+                        this.$notify({type: 'warning', message: res[0].msg});
+                    }
+                    //获取第一分类的菜品数据
+                    if (res[1].code === 1) {
+                        this.cartData = res[1].data
+                    } else {
+                        this.$notify({type: 'warning', message: res[1].msg});
+                    }
+                })
+            },
+            //分类点击
+            categoryClick(index, id, type) {
+                this.activeType = index
+                this.categoryId = id
+                if (type === 1) {    //type=1，展示菜品
+                    this.getDishList()
+                } else {          //type=2，展示套餐
+                    this.getSetmealData()
+                }
+            },
+            //获取菜品数据
+            async getDishList() {
+                if (!this.categoryId) {
+                    return
+                }
+                const res = await dishListApi({categoryId: this.categoryId, status: 1})
+                if (res.code === 1) {
+                    let dishList = res.data
+                    const cartData = this.cartData
+                    if (dishList.length > 0 && cartData.length > 0) {
+                        dishList.forEach(dish => {
+                            cartData.forEach(cart => {
+                                if (dish.id === cart.dishId) {
+                                    dish.number = cart.number
+                                }
+                            })
+                        })
+                    }
+                    this.dishList = dishList
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //获取套餐数据setmealId
+            async getSetmealData() {
+                if (!this.categoryId) {
+                    return
+                }
+                const res = await setmealListApi({categoryId: this.categoryId, status: 1})
+                if (res.code === 1) {
+                    let dishList = res.data
+                    const cartData = this.cartData
+                    if (dishList.length > 0 && cartData.length > 0) {
+                        dishList.forEach(dish => {
+                            cartData.forEach(cart => {
+                                if (dish.id === cart.setmealId) {
+                                    dish.number = cart.number
+                                }
+                            })
+                        })
+                    }
+                    this.dishList = dishList
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //获取购物车数据
+            async getCartData() {
+                const res = await cartListApi({})
+                if (res.code === 1) {
+                    this.cartData = res.data
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //菜单中往购物车中添加商品
+            //菜品添加到购物车 3
+            async addCart(item) {
+                let params = {
+                    amount: item.price / 100,//金额
+                    dishFlavor: item.dishFlavor,//口味  如果没有传undefined
+                    dishId: undefined,//菜品id
+                    setmealId: undefined,//套餐id
+                    name: item.name,
+                    image: item.image
+                }
+                if (Array.isArray(item.flavors)) {//表示是菜品
+                    params.dishId = item.id
+                } else {//表示套餐 套餐没有口味
+                    params.setmealId = item.id
+                }
+                //菜品添加到购物车 4
+                const res = await addCartApi(params)
+                if (res.code === 1) {
+                    this.dishList.forEach(dish => {
+                        if (dish.id === item.id) {
+                            dish.number = res.data.number
+                        }
+                    })
+                    if (this.setMealDialog.show) {
+                        item.number = res.data.number
+                    }
+                    this.getCartData()
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+
+            //菜单中减少选中的商品
+            async subtractCart(item) {
+                let params = {
+                    dishId: item.id,
+                }
+                if (!Array.isArray(item.flavors)) {
+                    params = {
+                        setmealId: item.id,
+                    }
+                }
+                const res = await updateCartApi(params)
+                if (res.code === 1) {
+                    this.dishList.forEach(dish => {
+                        if (dish.id === item.id) {
+                            dish.number = (res.data.number === 0 ? undefined : res.data.number)
+                        }
+                    })
+                    if (this.setMealDialog.show) {
+                        item.number = (res.data.number === 0 ? undefined : res.data.number)
+                    }
+                    await this.getCartData();
+                    await this.getDishList();
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+
+            //展开购物车
+            openCart() {
+                if (this.cartData.length > 0) {
+                    this.cartDialogShow = true
+                }
+            },
+            //购物车中增加商品数量
+            async cartNumAdd(item) {
+                let params = {
+                    amount: item.amount,//金额
+                    dishFlavor: item.dishFlavor,//口味  如果没有传undefined
+                    dishId: item.dishId,//菜品id
+                    setmealId: item.setmealId,//套餐id
+                    name: item.name,
+                    image: item.image
+                }
+                const res = await addCartApi(params)
+                if (res.code === 1) {
+                    this.dishList.forEach(dish => {
+                        if (dish.id === (item.dishId || item.setmealId)) {
+                            dish.number = res.data.number
+                        }
+                    })
+                    console.log(this.dishList)
+                    this.getCartData()
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //购物车中减少商品数量
+            async cartNumberSubtract(item) {
+                let params = {
+                    dishId: item.dishId,
+                    setmealId: item.setmealId,
+                }
+                const res = await updateCartApi(params)
+                if (res.code === 1) {
+                    this.dishList.forEach(dish => {
+                        if (dish.id === (item.dishId || item.setmealId)) {
+                            dish.number = (res.data.number === 0 ? undefined : res.data.number)
+                        }
+                    })
+                    await this.getCartData();
+                    await this.getDishList();
+                    // this.initData()
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+
+            //修改商品列表中的数据number
+            changeDishList(item) {
+                for (let ele of this.dishList) {
+                    if (ele.id === (item.setmealId || item.dishId)) {
+                        ele.number = item.number
+                    }
+                }
+            },
+
+            //清空购物车
+            async clearCart() {
+                const res = await clearCartApi()
+                if (res.code === 1) {
+                    for (let ele of this.dishList) {
+                        ele.number = undefined
+                    }
+                    this.cartData = []
+                    this.cartDialogShow = false
+                } else {
+                    this.$notify({type: 'warning', message: res.msg});
+                }
+            },
+            //点击选择规格
+            chooseFlavorClick(item) {
+                //清空选择规格窗口的数据
+                this.dialogFlavor = {
+                    name: '',
+                    flavors: [],
+                    dishId: undefined,
+                    price: undefined,
+                    show: false
+                }
+                //重新展示数据
+                this.dialogFlavor = {
+                    name: item.name,
+                    flavors: item.flavors,
+                    dishId: item.id,
+                    price: item.price,
+                    show: true,
+                    image: item.image
+                }
+            },
+            flavorClick(flavor, item) {
+                flavor.dishFlavor = item
+                //强制刷新dialog的dom
+                this.dialogFlavor.show = false
+                this.dialogFlavor.show = true
+            },
+            //选择规格加入购物车
+            //菜品添加到购物车 2
+            dialogFlavorAddCart() {
+                const dialogFlavor = this.dialogFlavor
+                let flag = true
+                let dishFlavor = []
+                //初始化dishFlavor
+                dialogFlavor.flavors.forEach(item => {
+                    if (item.dishFlavor) {
+                        dishFlavor.push(item.dishFlavor)
+                    } else {
+                        flag = false
+                        Notify({type: 'warning', message: '请选择' + item.name});
+                    }
+                })
+                if (flag) {
+                    this.addCart({
+                        price: dialogFlavor.price,
+                        dishFlavor: dishFlavor.join(","),
+                        id: dialogFlavor.dishId,
+                        flavors: [],
+                        image: dialogFlavor.image,
+                        name: dialogFlavor.name
+                    })
+                    this.dialogFlavor.show = false
+                }
+
+            },
+            //网络图片路径转换
+            imgPathConvert(path) {
+                return imgPath(path)
+            },
+            //跳转到去结算界面
+            toAddOrderPage() {
+                if (this.cartData.length > 0) {
+                    window.requestAnimationFrame(() => {
+                        window.location.href = 'page/add-order.html'
+                    })
+                }
+            },
+            toUserPage() {
+                window.requestAnimationFrame(() => {
+                    window.location.href = 'page/user.html'
+                })
+            },
+            async dishDetails(item) {
+                //先清除对象数据，如果不行的话dialog使用v-if
+                this.detailsDialog.item = {}
+                this.setMealDialog.item = {}
+
+                if (Array.isArray(item.flavors)) {    //如果有flavors，说明当前点击的是菜品
+                    this.detailsDialog.item = item
+                    this.detailsDialog.show = true     //显示菜品详情窗口
+                } else {      //如果没有flavors，说明当前点击的是套餐
+                    const res = await setMealDishDetailsApi(item.id)   //获取当前套餐的数据
+                    if (res.code === 1) {
+                        this.setMealDialog.item = {...item, list: res.data.setmealDishes}
+                        this.setMealDialog.show = true   //显示套餐的详情数据窗口
+                    } else {
+                        this.$notify({type: 'warning', message: res.msg});
+                    }
+                }
+
+            }
+
+        }
+    })
+</script>
+</html>
