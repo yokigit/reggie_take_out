@@ -23,6 +23,11 @@ spring:
     password: fqguzrnsjndkeaid
     default-encoding: UTF-8
     test-connection: true
+  redis:
+    host: 192.168.162.129
+    port: 6379
+    password: y-CHess02
+    database: 0
 
 
 mybatis-plus:
