@@ -42,4 +42,4 @@ mybatis-plus:
       id-type: assign_id
 
 reggie:
-  basePath: D:\maven_work\maven_projects\src\main\resources\backend\images\dish\
+  basePath: D:\maven_work\maven_projects\reggie_take_out\src\main\resources\backend\images\dish\

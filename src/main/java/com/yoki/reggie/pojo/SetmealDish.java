@@ -30,8 +30,11 @@ public class SetmealDish implements Serializable {
     //菜品名称 （冗余字段）
     private String name;
 
-    //菜品原价
+    //菜品原价（冗余字段）
     private BigDecimal price;
+
+    //菜品图片（冗余字段）-- 移动端查看套餐的菜品图片优化，同时数据库也要添加image字段
+    private String image;
 
     //份数
     private Integer copies;

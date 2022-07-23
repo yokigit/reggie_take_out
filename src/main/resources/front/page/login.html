@@ -23,7 +23,10 @@
 <div id="login" v-loading="loading">
     <div class="divHead">登录</div>
     <div class="divContainer">
-        <el-input maxlength='20' placeholder=" 请输入邮箱" v-model="form.phone"/>
+        <!---->
+        <!--  使用邮箱登录优化,将该页面中的phone替换成email  -->
+        <!---->
+        <el-input maxlength='20' placeholder=" 请输入邮箱" v-model="form.email"/>
         </el-input>
         <div class="divSplit"></div>
         <el-input maxlength='20' placeholder=" 请输入验证码" v-model="form.code"/>
@@ -32,7 +35,7 @@
         <span @click='getCode' v-if="second <= 0">获取验证码</span>
     </div>
     <div class="divMsg" v-if="msgFlag">邮箱格式不正确，请重新输入</div>
-    <el-button :class="{btnSubmit:1===1,btnNoPhone:!form.phone,btnPhone:form.phone}" @click="btnLogin" type="primary">
+    <el-button :class="{btnSubmit:1===1,btnNoEmail:!form.email,btnEmail:form.email}" @click="btnLogin" type="primary">
         登录
     </el-button>
 </div>
@@ -53,7 +56,7 @@
         data() {
             return {
                 form: {
-                    phone: '',
+                    email: '',
                     code: ''
                 },
                 // 倒计时
@@ -80,10 +83,10 @@
                 // const regex = /^(13[0-9]{9})|(15[0-9]{9})|(17[0-9]{9})|(18[0-9]{9})|(19[0-9]{9})$/;
                 // 改为邮箱验证
                 const regex = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
-                if (regex.test(this.form.phone)) {
+                if (regex.test(this.form.email)) {
                     this.msgFlag = false
                     //this.form.code = (Math.random()*1000000).toFixed(0)
-                    sendMsgApi({phone: this.form.phone})
+                    sendMsgApi({email: this.form.email})
                     // 不可重复发送验证码
                     this.sending = false
                     // 倒计时效果
@@ -109,12 +112,12 @@
                 }, 1000)
             },
             async btnLogin() {
-                if (this.form.phone && this.form.code) {
+                if (this.form.email && this.form.code) {
                     this.loading = true
                     const res = await loginApi(this.form)
                     this.loading = false
                     if (res.code === 1) {
-                        sessionStorage.setItem("userPhone", this.form.phone)
+                        sessionStorage.setItem("userEmail", this.form.email)
                         window.requestAnimationFrame(() => {
                             window.location.href = '../index.html'
                         })

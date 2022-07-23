@@ -353,6 +353,8 @@
                                         <span style="flex: 3;text-align: left">{{ item.dishName }}</span>
                                         <span>{{ item.status == 0 ? '停售' : '在售' }}</span>
                                         <span>{{ Number(item.price)/100 }}</span>
+                                        <!--  移动端查看套餐的菜品图片优化  -->
+                                        <span style="display:none">{{ item.image }}</span>>
                                     </div>
                                 </el-checkbox>
                             </div>
@@ -574,6 +576,7 @@
                             dishId: obj.dishId,
                             name: obj.name,
                             price: obj.price,
+                            image: obj.image,
                         }))
                         prams.status = this.ruleForm ? 1 : 0
                         prams.categoryId = this.ruleForm.idType

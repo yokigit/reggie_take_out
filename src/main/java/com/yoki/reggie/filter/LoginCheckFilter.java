@@ -41,12 +41,14 @@ public class LoginCheckFilter implements Filter {
                 "/user/login"
         };
 
+        //判断该次请求是否需要放行
         if (check(excludeURLs, requestURI)) {
             log.info("本次请求不需处理" + requestURI);
             filterChain.doFilter(request, response);
             return;
         }
 
+        //后台
         Long empId = (Long) request.getSession().getAttribute("employee");
         if (empId != null) {
             log.info("员工用户已登录，用户id：" + empId);
@@ -57,6 +59,7 @@ public class LoginCheckFilter implements Filter {
             return;
         }
 
+        //移动端
         Long userId = (Long) request.getSession().getAttribute("user");
         if (userId != null) {
             log.info("普通用户已登录，用户id：" + userId);

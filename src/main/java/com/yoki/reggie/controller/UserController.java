@@ -67,16 +67,16 @@ public class UserController {
     @PostMapping("/sendMsg")
     public Result<String> sendEmailMsg(@RequestBody User user, HttpSession session) {
         //获取邮箱
-        String phone = user.getPhone();
+        String email = user.getEmail();
 
         //如果邮箱不为空
-        if (StringUtils.isNotEmpty(phone)) {
-            log.info("登录验证码：" + phone);
+        if (StringUtils.isNotEmpty(email)) {
+            log.info("登录验证码：" + email);
 
             //填充邮件主题
             String subject = "【瑞吉外卖】";
             //接收方
-            String to = phone;
+            String to = email;
             //生成验证码
 //            String code = ValidateCodeUtils.generateValidateCode4String(6);
             String code = "aaaaaa";
@@ -87,7 +87,7 @@ public class UserController {
             userService.sendMsg(to, subject, text);
 
             //将验证码存在session域中
-            session.setAttribute("phone", code);
+            session.setAttribute("email", code);
 
             return Result.success("邮件发送成功");
         }
@@ -106,18 +106,18 @@ public class UserController {
         //获取验证码
         String code = map.get("code");
         //验证码是否正确
-        if (StringUtils.isNotEmpty(code) && code.equals(session.getAttribute("phone"))) {
+        if (StringUtils.isNotEmpty(code) && code.equals(session.getAttribute("email"))) {
             //获取手机号
-            String phone = map.get("phone");
+            String email = map.get("email");
             //根据手机号查询用户
             LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(User::getPhone, phone);
+            queryWrapper.eq(User::getEmail, email);
             User user = userService.getOne(queryWrapper);
             //如果不存在该用户
             if (user == null) {
                 //注册用户
                 user = new User();
-                user.setPhone(phone);
+                user.setEmail(email);
                 userService.save(user);
             }
 

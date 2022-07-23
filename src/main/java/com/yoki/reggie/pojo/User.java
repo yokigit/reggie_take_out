@@ -26,6 +26,9 @@ public class User implements Serializable {
     //手机号（邮箱）
     private String phone;
 
+    //邮箱 -- 使用邮箱登录优化，同时在数据库中也要添加email字段
+    private String email;
+
 
     //性别 0 女 1 男
     private String sex;
