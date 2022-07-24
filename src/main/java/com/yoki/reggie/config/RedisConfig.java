@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +19,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @create: 2022-07-23 01:11
  */
 @Configuration
+@Slf4j
 public class RedisConfig extends CachingConfigurerSupport {
     @Bean("redisTemplate")
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        log.info("开启redisTemplate...");
+
         //为方便开发，一般直接使用<String,Object>
         RedisTemplate<String, Object> template = new RedisTemplate<String, Object>();
         //连接工厂

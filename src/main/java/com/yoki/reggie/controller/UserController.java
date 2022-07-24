@@ -10,6 +10,7 @@ import com.yoki.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @program: reggie_take_out
@@ -30,6 +32,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 通过手机短信发送验证码
@@ -87,7 +92,9 @@ public class UserController {
             userService.sendMsg(to, subject, text);
 
             //将验证码存在session域中
-            session.setAttribute("email", code);
+//            session.setAttribute("email", code);
+            //优化：将验证码存在redis缓存中，并设置有效期为5分钟
+            redisTemplate.opsForValue().set("code", code, 5, TimeUnit.MINUTES);
 
             return Result.success("邮件发送成功");
         }
@@ -105,8 +112,14 @@ public class UserController {
     public Result<User> login(@RequestBody Map<String, String> map, HttpSession session) {
         //获取验证码
         String code = map.get("code");
+
+        //从session域中获取已保存的验证码
+//        Object codeInSession = session.getAttribute("email");
+        //优化：从redis缓存中获取已保存的验证码
+        Object codeInRedis = redisTemplate.opsForValue().get("code");
+
         //验证码是否正确
-        if (StringUtils.isNotEmpty(code) && code.equals(session.getAttribute("email"))) {
+        if (StringUtils.isNotEmpty(code) && code.equals(codeInRedis)) {
             //获取手机号
             String email = map.get("email");
             //根据手机号查询用户
@@ -128,6 +141,4 @@ public class UserController {
         }
         return Result.error("登录失败");
     }
-
-
 }
