@@ -16,6 +16,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -73,10 +75,12 @@ public class SetmealController {
         return Result.success(setmealDtoPage);
     }
 
+    //优化：使用缓存注解@CacheEvict，添加套餐时若缓存中有套餐数据，则全部删除
+    @CacheEvict(value = "setmealCache", allEntries = true)
     @PostMapping("")
     public Result<String> add(@RequestBody SetmealDto setmealDto) {
         setmealService.saveWithDish(setmealDto);
-        return null;
+        return Result.success("添加套餐成功");
     }
 
     @GetMapping("/{id}")
@@ -85,12 +89,16 @@ public class SetmealController {
         return Result.success(setmealDto);
     }
 
+    //优化：使用缓存注解@CacheEvict，删除套餐时若缓存中有套餐数据，则全部删除
+    @CacheEvict(value = "setmealCache", allEntries = true)
     @PutMapping("")
     public Result<String> update(@RequestBody SetmealDto setmealDto) {
         setmealService.updateWithDish(setmealDto);
         return Result.success("修改套餐成功");
     }
 
+    //优化：使用缓存注解@CacheEvict，修改套餐销售状态时若缓存中有套餐数据，则全部删除
+    @CacheEvict(value = "setmealCache", allEntries = true)
     @PostMapping("/status/{status}")
     public Result<String> changeStatus(@PathVariable("status") Integer status, @RequestParam("ids") Long[] ids) {
         //根据id数组查询Setmeal
@@ -113,12 +121,16 @@ public class SetmealController {
         }
     }
 
+    //优化：使用缓存注解@CacheEvict，若缓存中有套餐数据，则全部删除
+    @CacheEvict(value = "setmealCache", allEntries = true)
     @DeleteMapping("")
     public Result<String> delete(@RequestParam("ids") Long[] ids) {
         setmealService.deleteWithDish(ids);
         return Result.success("删除套餐成功");
     }
 
+    //优化：使用缓存注解@Cacheable, 查询某分类套餐时若缓存中有套餐数据则直接返回，否则经过数据查询和将返回结果加入缓存中
+    @Cacheable(value = "setmealCache", key = "#categoryId+'_'+#status")
     @GetMapping("/list")
     public Result<List<Setmeal>> list(Long categoryId, Integer status) {
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
@@ -149,6 +161,4 @@ public class SetmealController {
         }
         return Result.error("获取套餐内容失败");
     }
-
-
 }

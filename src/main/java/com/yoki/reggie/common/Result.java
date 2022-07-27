@@ -3,6 +3,7 @@ package com.yoki.reggie.common;
 import com.baomidou.mybatisplus.extension.api.R;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +14,7 @@ import java.util.Map;
  * 通用返回结果，服务端响应的数据最终都会封装成该类型的对象
  */
 @Data
-public class Result<T> {
+public class Result<T> implements Serializable {
     private Integer code;
     private String msg;
     private T data;

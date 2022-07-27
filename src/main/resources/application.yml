@@ -28,6 +28,10 @@ spring:
     port: 6379
     password: y-CHess02
     database: 0
+  #优化：使用基于redis缓存技术的SpringCache
+  cache:
+    redis:
+      time-to-live: 1800000     #设置缓存有效时间为30分钟
 
 
 mybatis-plus:
