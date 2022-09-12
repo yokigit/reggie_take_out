@@ -20,7 +20,7 @@ spring:
     #开启 IMAP/SMTP服务 的qq邮箱的账号 ()
     username: 2654149470@qq.com
     #授权码( POP3/SMTP服务:fqguzrnsjndkeaid, IMAP/SMTP服务: wdrhevljsaqiebbg)
-    password: fqguzrnsjndkeaid
+    password: *********
     default-encoding: UTF-8
     test-connection: true
 
